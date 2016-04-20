@@ -31,38 +31,59 @@ import org.apache.lucene.util.AttributeImpl;
 public class IdentifierFilter extends TokenFilter {
 
     public static final boolean DEFAULT_IGNORE_DELIMITER = false;
+    public static final char EMPTY_CHAR = 0x0;
     private final PackedTokenAttributeImpl compositionTermAtt = new PackedTokenAttributeImpl();
     protected final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     protected final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     protected final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
     private boolean finished;
-    private final boolean ignoreDelimiters;
+    private final char customDelimiter;
 
-    public IdentifierFilter(TokenStream input, boolean ignoreDelimiters) {
+
+    protected IdentifierFilter(TokenStream input, char customDelimiter) {
         super(input);
         finished = false;
-        this.ignoreDelimiters = ignoreDelimiters;
+        this.customDelimiter = customDelimiter;
     }
 
+
     public IdentifierFilter(TokenStream input) {
-        this(input, DEFAULT_IGNORE_DELIMITER);
+        this(input, EMPTY_CHAR);
     }
+
+
+    private boolean overwriteDelimiter() {
+        return customDelimiter != EMPTY_CHAR;
+    }
+
 
     @Override
     public final boolean incrementToken() throws IOException {
-        boolean read;
+        boolean read, hasDelim = false;
         while (read = input.incrementToken()) {
             boolean punctation = typeAtt.type().equals(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.PUNCTATION]);
-            if (!punctation || !ignoreDelimiters) {
+            if (!punctation || !overwriteDelimiter()) {
                 appendComposition(compositionTermAtt, termAtt, offsetAtt);
+                hasDelim = false;
+            }
+            if (!hasDelim && customDelimiter != EMPTY_CHAR) {
+                compositionTermAtt.append(customDelimiter);
+                hasDelim = true;
             }
         }
+
+        // remove last delimiter
+        if (hasDelim && compositionTermAtt.length() > 0 && customDelimiter != EMPTY_CHAR) {
+            compositionTermAtt.setLength(compositionTermAtt.length() - 1);
+        }
+
         if (!finished) {
             markComposition();
             finished = read = true;
         }
         return read;
     }
+
 
     @Override
     public void reset() throws IOException {
@@ -71,11 +92,13 @@ public class IdentifierFilter extends TokenFilter {
         compositionTermAtt.clear();
     }
 
+
     private void markComposition() {
         compositionTermAtt.setType(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.ALPHANUM]);
         ((AttributeImpl) compositionTermAtt).copyTo((AttributeImpl) termAtt);
         compositionTermAtt.clear();
     }
+
 
     private void appendComposition(PackedTokenAttributeImpl target, CharTermAttribute source, OffsetAttribute offsetAtt) {
         // pridaj atribúty do kompozície

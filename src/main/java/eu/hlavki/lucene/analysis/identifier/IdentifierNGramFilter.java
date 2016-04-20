@@ -15,6 +15,7 @@ package eu.hlavki.lucene.analysis.identifier;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static eu.hlavki.lucene.analysis.identifier.IdentifierFilter.EMPTY_CHAR;
 import java.io.IOException;
 import java.util.*;
 import org.apache.lucene.analysis.TokenFilter;
@@ -51,7 +52,7 @@ public class IdentifierNGramFilter extends TokenFilter {
 
     private final int minGramSize, maxGramSize;
     private final boolean includeEdged;
-    private final boolean ignoreDelimiters;
+    private final char customDelimiter;
 
     private final LinkedList<Item> items;
     private final Deque<PackedTokenAttributeImpl> queue;
@@ -60,17 +61,13 @@ public class IdentifierNGramFilter extends TokenFilter {
     private int termCount;
     private int maxSize;
 
-    public IdentifierNGramFilter(TokenStream input, int minGramSize, int maxGramSize, boolean includeEdged) {
-        this(input, minGramSize, maxGramSize, includeEdged, DEFAULT_IGNORE_DELIMITER);
-    }
-
     public IdentifierNGramFilter(TokenStream input, int minGramSize, int maxGramSize,
-            boolean includeEdged, boolean ignoreDelimiters) {
+            boolean includeEdged, char customDelimiter) {
         super(input);
         this.minGramSize = minGramSize;
         this.maxGramSize = maxGramSize;
         this.includeEdged = includeEdged;
-        this.ignoreDelimiters = ignoreDelimiters;
+        this.customDelimiter = customDelimiter;
 
         count = 0;
         lastItem = false;
@@ -80,6 +77,10 @@ public class IdentifierNGramFilter extends TokenFilter {
         maxSize = 0;
     }
 
+    private boolean overwriteDelimiter() {
+        return customDelimiter != EMPTY_CHAR;
+    }
+
     @Override
     public final boolean incrementToken() throws IOException {
         boolean read;
@@ -87,6 +88,7 @@ public class IdentifierNGramFilter extends TokenFilter {
             markComposition(queue.pop());
             read = true;
         } else {
+            boolean hasDelim = false;
             do {
                 read = input.incrementToken();
                 if (read) {
@@ -95,14 +97,24 @@ public class IdentifierNGramFilter extends TokenFilter {
                         count++;
                         termCount++;
                         items.add(new Item(((PackedTokenAttributeImpl) termAtt).clone()));
-                    } else if (!items.isEmpty() && !ignoreDelimiters) {
+                    } else if (!items.isEmpty() && !overwriteDelimiter()) {
                         items.getLast().addDelimiter(((PackedTokenAttributeImpl) termAtt).clone());
                     }
-                    if (!punctation || !ignoreDelimiters) {
+                    if (!punctation || !overwriteDelimiter()) {
                         appendComposition(compositionTermAtt, termAtt, offsetAtt);
+                        hasDelim = false;
+                    }
+                    if (!hasDelim && customDelimiter != EMPTY_CHAR) {
+                        compositionTermAtt.append(customDelimiter);
+                        hasDelim = true;
                     }
                 }
             } while (count < maxGramSize && read);
+
+            // remove last delimiter
+            if (hasDelim && compositionTermAtt.length() > 0 && customDelimiter != EMPTY_CHAR) {
+                compositionTermAtt.setLength(compositionTermAtt.length() - 1);
+            }
 
             maxSize = items.size() > maxSize ? items.size() : maxSize;
             if (!items.isEmpty()) {
@@ -155,6 +167,9 @@ public class IdentifierNGramFilter extends TokenFilter {
             if (i < items.length - 1) {
                 for (PackedTokenAttributeImpl delim : item.delimiters) {
                     appendComposition(result, delim, delim);
+                }
+                if (customDelimiter != EMPTY_CHAR) {
+                    result.append(customDelimiter);
                 }
             }
         }

@@ -60,26 +60,30 @@ public class IdentifierFilterTest {
     }
 
     @Test
-    public void ignoreDelimiters() {
-        Term term = analyze("I. ÚS 22/2015", true);
+    public void customDelimiter() {
+        Term term = analyze("I. ÚS 22/2015", '.');
         assertNotNull(term);
-        assertThat(term.getTerm(), is("ius222015"));
+        assertThat(term.getTerm(), is("i.us.22.2015"));
     }
 
     @Test
     public void includeDelimiters() {
-        Term term = analyze("I. ÚS 22/2015", false);
+        Term term = analyze("I. ÚS 22/2015");
         assertNotNull(term);
         assertThat(term.getTerm(), is("i.us22/2015"));
     }
 
-    private static Term analyze(final String text, final boolean ignoreDelimiter) {
+    private static Term analyze(final String text) {
+        return analyze(text, IdentifierFilter.EMPTY_CHAR);
+    }
+
+    private static Term analyze(final String text, final char customDelimiter) {
         final List<Term> result = new ArrayList<>();
         Analyzer analyzer = new Analyzer() {
             @Override
             protected Analyzer.TokenStreamComponents createComponents(String fieldName) {
                 final Tokenizer src = new IdentifierTokenizer();
-                TokenStream tok = new IdentifierFilter(src, ignoreDelimiter);
+                TokenStream tok = new IdentifierFilter(src, customDelimiter);
                 tok = new ASCIIFoldingFilter(tok);
                 tok = new LowerCaseFilter(tok);
                 return new Analyzer.TokenStreamComponents(src, tok);

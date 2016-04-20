@@ -15,6 +15,7 @@
  */
 package eu.hlavki.lucene.analysis.identifier;
 
+import static eu.hlavki.lucene.analysis.identifier.IdentifierFilter.EMPTY_CHAR;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -64,46 +66,56 @@ public class IdentifierNGramFilterTest {
 
     @Test
     public void courtFileId() {
-        assertThat(analyze("I. ÚS 22/2015", 3, 3, true, false).size(), is(3));
-        assertThat(analyze("I. ÚS 22/2015", 3, 3, false, false).size(), is(2));
-        assertThat(analyze("I. ÚS 22/2015", 2, 5, true, false).size(), is(6));
-        assertThat(analyze("I. ÚS 22/2015", 3, 8, true, false).size(), is(3));
-        assertThat(analyze("I. ÚS 22/2015", 2, 4, true, false).size(), is(analyze("I. ÚS 22/2015", 2, 4, false, false).size()));
-        assertThat(analyze("I. ÚS 22/2015", 1, 2, false, false).size(), is(7));
-        assertThat(analyze("I. ÚS 22/2015", 1, 1, false, false).size(), is(4));
-        assertThat(analyze("I. ÚS 22/2015", 1, 1, true, false).size(), is(5));
+        assertThat(analyze("I. ÚS 22/2015", 3, 3, true).size(), is(3));
+        assertThat(analyze("I. ÚS 22/2015", 3, 3, false).size(), is(2));
+        assertThat(analyze("I. ÚS 22/2015", 2, 5, true).size(), is(6));
+        assertThat(analyze("I. ÚS 22/2015", 3, 8, true).size(), is(3));
+        assertThat(analyze("I. ÚS 22/2015", 2, 4, true).size(), is(analyze("I. ÚS 22/2015", 2, 4, false).size()));
+        assertThat(analyze("I. ÚS 22/2015", 1, 2, false).size(), is(7));
+        assertThat(analyze("I. ÚS 22/2015", 1, 1, false).size(), is(4));
+        assertThat(analyze("I. ÚS 22/2015", 1, 1, true).size(), is(5));
+        assertThat(analyze("I. ÚS 22/2015", 3, 3, false), contains(new Term("i.us22"), new Term("us22/2015")));
     }
 
     @Test
-    public void noDelimiter() {
-        System.out.println(analyze("I. ÚS 22/2015", 3, 3, false, false));
-        System.out.println(analyze("I. ÚS 22/2015", 3, 3, false, true));
-        System.out.println(analyze("I. ÚS 22/2015", 4, 4, true, true));
+    public void customDelimiter() {
+        assertThat(analyze("I. ÚS 22/2015", 3, 3, false, '|'), contains(new Term("i|us|22"), new Term("us|22|2015")));
+        assertThat(analyze("I. ÚS 22/2015", 3, 3, true, ','), contains(new Term("i,us,22"), new Term("us,22,2015"), new Term("i,us,22,2015")));
+        assertThat(analyze("I. ÚS 22/2015", 4, 4, true, '.'), contains(new Term("i.us.22.2015")));
     }
 
     @Test
     public void ecli() {
-        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 3, true, false).size(), is(8));
-        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 2, 2, false, true).size(), is(8));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 3, true).size(), is(8));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 2, 2, false).size(), is(8));
 
-        List<Term> terms = analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 8, false, false);
+        List<Term> terms = analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 8, false);
         Set<Term> termsSet = new HashSet<>(terms);
         assertThat(terms.size(), is(termsSet.size()));
-        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 8, false, false).size(), is(27));
-        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, false, true).size(), is(9));
-        
-        System.out.println(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, true, false));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 8, false).size(), is(27));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 8, true).size(), is(28));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 9, true).size(), is(28));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 3, 10, true).size(), is(28));
+        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, false).size(), is(9));
+
+        System.out.println(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, true));
+        System.out.println(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 9, 9, false, '|'));
 //        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, true, true).size(), is(1));
     }
 
     private static List<Term> analyze(final String text, final int minNGramSize, final int maxNGramSize,
-            final boolean includeIdentifier, final boolean ignoreDelimiter) {
+            final boolean includeIdentifier) {
+        return analyze(text, minNGramSize, maxNGramSize, includeIdentifier, EMPTY_CHAR);
+    }
+
+    private static List<Term> analyze(final String text, final int minNGramSize, final int maxNGramSize,
+            final boolean includeIdentifier, final char customDelimiter) {
         final List<Term> result = new ArrayList<>();
         Analyzer analyzer = new Analyzer() {
             @Override
             protected Analyzer.TokenStreamComponents createComponents(String fieldName) {
                 final Tokenizer src = new IdentifierTokenizer();
-                TokenStream tok = new IdentifierNGramFilter(src, minNGramSize, maxNGramSize, includeIdentifier, ignoreDelimiter);
+                TokenStream tok = new IdentifierNGramFilter(src, minNGramSize, maxNGramSize, includeIdentifier, customDelimiter);
                 tok = new ASCIIFoldingFilter(tok);
                 tok = new LowerCaseFilter(tok);
                 return new Analyzer.TokenStreamComponents(src, tok);

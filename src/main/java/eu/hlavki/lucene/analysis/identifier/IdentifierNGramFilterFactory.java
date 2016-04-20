@@ -28,7 +28,7 @@ public class IdentifierNGramFilterFactory extends TokenFilterFactory {
     private final int minGramSize;
     private final int maxGramSize;
     private final boolean includeIdentifier;
-    private final boolean ignoreDelimiter;
+    private final char customDelimiter;
 
     /**
      * Creates a new CodeFilterFactory
@@ -40,8 +40,7 @@ public class IdentifierNGramFilterFactory extends TokenFilterFactory {
         minGramSize = getInt(args, "minGramSize", IdentifierNGramFilter.DEFAULT_MIN_NGRAM_SIZE);
         maxGramSize = getInt(args, "maxGramSize", IdentifierNGramFilter.DEFAULT_MAX_NGRAM_SIZE);
         includeIdentifier = getBoolean(args, "includeIdentifier", IdentifierNGramFilter.DEFAULT_INCLUDE_IDENTIFIER);
-        ignoreDelimiter = getBoolean(args, "ignoreDelimiter", IdentifierNGramFilter.DEFAULT_IGNORE_DELIMITER);
-
+        customDelimiter = getChar(args, "customDelimiter", IdentifierFilter.EMPTY_CHAR);
         if (!args.isEmpty()) {
             throw new IllegalArgumentException("Unknown parameters: " + args);
         }
@@ -49,6 +48,6 @@ public class IdentifierNGramFilterFactory extends TokenFilterFactory {
 
     @Override
     public IdentifierNGramFilter create(TokenStream input) {
-        return new IdentifierNGramFilter(input, minGramSize, maxGramSize, includeIdentifier, ignoreDelimiter);
+        return new IdentifierNGramFilter(input, minGramSize, maxGramSize, includeIdentifier, customDelimiter);
     }
 }

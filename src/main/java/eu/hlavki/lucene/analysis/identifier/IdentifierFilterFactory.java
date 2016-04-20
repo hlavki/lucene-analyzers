@@ -25,7 +25,7 @@ import org.apache.lucene.analysis.util.TokenFilterFactory;
  */
 public class IdentifierFilterFactory extends TokenFilterFactory {
 
-    private final boolean ignoreDelimiter;
+    private final char customDelimiter;
 
     /**
      * Creates a new CodeFilterFactory
@@ -34,8 +34,7 @@ public class IdentifierFilterFactory extends TokenFilterFactory {
      */
     public IdentifierFilterFactory(Map<String, String> args) {
         super(args);
-        ignoreDelimiter = getBoolean(args, "ignoreDelimiter", IdentifierFilter.DEFAULT_IGNORE_DELIMITER);
-
+        customDelimiter = getChar(args, "customDelimiter", IdentifierFilter.EMPTY_CHAR);
         if (!args.isEmpty()) {
             throw new IllegalArgumentException("Unknown parameters: " + args);
         }
@@ -43,6 +42,6 @@ public class IdentifierFilterFactory extends TokenFilterFactory {
 
     @Override
     public IdentifierFilter create(TokenStream input) {
-        return new IdentifierFilter(input, ignoreDelimiter);
+        return new IdentifierFilter(input, customDelimiter);
     }
 }

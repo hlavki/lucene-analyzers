@@ -32,6 +32,10 @@ final class Term {
         this.endOffset = endOffset;
     }
 
+    public Term(String term) {
+        this(term, 0, term.length());
+    }
+
     public String getTerm() {
         return term;
     }
