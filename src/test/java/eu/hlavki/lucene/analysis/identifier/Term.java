@@ -17,14 +17,11 @@ package eu.hlavki.lucene.analysis.identifier;
 
 import java.util.Objects;
 
-/**
- *
- * @author Michal Hlavac
- */
 final class Term {
 
     private final String term;
     private final int startOffset, endOffset;
+
 
     public Term(String term, int startOffset, int endOffset) {
         this.term = term;
@@ -32,21 +29,26 @@ final class Term {
         this.endOffset = endOffset;
     }
 
+
     public Term(String term) {
         this(term, 0, term.length());
     }
+
 
     public String getTerm() {
         return term;
     }
 
+
     public int getStartOffset() {
         return startOffset;
     }
 
+
     public int getEndOffset() {
         return endOffset;
     }
+
 
     @Override
     public int hashCode() {
@@ -54,6 +56,7 @@ final class Term {
         hash = 61 * hash + Objects.hashCode(this.term);
         return hash;
     }
+
 
     @Override
     public boolean equals(Object obj) {
@@ -63,6 +66,7 @@ final class Term {
         if (!Objects.equals(this.term, other.term)) return false;
         return true;
     }
+
 
     @Override
     public String toString() {

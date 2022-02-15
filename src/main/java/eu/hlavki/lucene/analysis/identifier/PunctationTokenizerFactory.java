@@ -16,26 +16,22 @@
 package eu.hlavki.lucene.analysis.identifier;
 
 import java.util.Map;
-import org.apache.lucene.analysis.util.TokenizerFactory;
+import org.apache.lucene.analysis.TokenizerFactory;
 import org.apache.lucene.util.AttributeFactory;
 
-/**
- *
- * @author Michal Hlavac
- */
-public class IdentifierTokenizerFactory extends TokenizerFactory {
+public class PunctationTokenizerFactory extends TokenizerFactory {
 
-    public IdentifierTokenizerFactory(Map<String, String> args) {
+    public PunctationTokenizerFactory(Map<String, String> args) {
         super(args);
-
         if (!args.isEmpty()) {
             throw new IllegalArgumentException("Unknown parameters: " + args);
         }
     }
 
+
     @Override
-    public IdentifierTokenizer create(AttributeFactory factory) {
-        IdentifierTokenizer tokenizer = new IdentifierTokenizer(factory);
+    public PunctationTokenizer create(AttributeFactory factory) {
+        PunctationTokenizer tokenizer = new PunctationTokenizer(factory);
         return tokenizer;
     }
 }

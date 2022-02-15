@@ -27,37 +27,15 @@ import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import static org.hamcrest.CoreMatchers.is;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
-/**
- *
- * @author Michal Hlavac
- */
 public class IdentifierFilterTest {
 
     public IdentifierFilterTest() {
     }
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     @Test
     public void customDelimiter() {
@@ -66,6 +44,7 @@ public class IdentifierFilterTest {
         assertThat(term.getTerm(), is("i.us.22.2015"));
     }
 
+
     @Test
     public void includeDelimiters() {
         Term term = analyze("I. ÚS 22/2015");
@@ -73,23 +52,25 @@ public class IdentifierFilterTest {
         assertThat(term.getTerm(), is("i.us22/2015"));
     }
 
+
     private static Term analyze(final String text) {
         return analyze(text, IdentifierFilter.EMPTY_CHAR);
     }
+
 
     private static Term analyze(final String text, final char customDelimiter) {
         final List<Term> result = new ArrayList<>();
         Analyzer analyzer = new Analyzer() {
             @Override
             protected Analyzer.TokenStreamComponents createComponents(String fieldName) {
-                final Tokenizer src = new IdentifierTokenizer();
+                final Tokenizer src = new PunctationTokenizer();
                 TokenStream tok = new IdentifierFilter(src, customDelimiter);
                 tok = new ASCIIFoldingFilter(tok);
                 tok = new LowerCaseFilter(tok);
                 return new Analyzer.TokenStreamComponents(src, tok);
             }
         };
-        try (TokenStream stream = analyzer.tokenStream(null, new StringReader(text))) { // získaj inštanciu prúdu tokenov
+        try ( TokenStream stream = analyzer.tokenStream(null, new StringReader(text))) { // získaj inštanciu prúdu tokenov
             stream.reset();
             // iteruj cez tokeny
             while (stream.incrementToken()) {

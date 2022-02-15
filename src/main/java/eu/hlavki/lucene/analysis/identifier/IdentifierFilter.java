@@ -24,10 +24,6 @@ import org.apache.lucene.analysis.tokenattributes.PackedTokenAttributeImpl;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.util.AttributeImpl;
 
-/**
- *
- * @author Michal Hlavac
- */
 public class IdentifierFilter extends TokenFilter {
 
     public static final boolean DEFAULT_IGNORE_DELIMITER = false;
@@ -61,7 +57,7 @@ public class IdentifierFilter extends TokenFilter {
     public final boolean incrementToken() throws IOException {
         boolean read, hasDelim = false;
         while (read = input.incrementToken()) {
-            boolean punctation = typeAtt.type().equals(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.PUNCTATION]);
+            boolean punctation = typeAtt.type().equals(PunctationTokenizer.TOKEN_TYPES[PunctationTokenizer.PUNCTATION]);
             if (!punctation || !overwriteDelimiter()) {
                 appendComposition(compositionTermAtt, termAtt, offsetAtt);
                 hasDelim = false;
@@ -94,7 +90,7 @@ public class IdentifierFilter extends TokenFilter {
 
 
     private void markComposition() {
-        compositionTermAtt.setType(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.ALPHANUM]);
+        compositionTermAtt.setType(PunctationTokenizer.TOKEN_TYPES[PunctationTokenizer.ALPHANUM]);
         ((AttributeImpl) compositionTermAtt).copyTo((AttributeImpl) termAtt);
         compositionTermAtt.clear();
     }

@@ -31,38 +31,15 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
 
-/**
- *
- * @author Michal Hlavac
- */
 public class IdentifierNGramFilterTest {
 
     public IdentifierNGramFilterTest() {
     }
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
 
     @Test
     public void courtFileId() {
@@ -77,12 +54,14 @@ public class IdentifierNGramFilterTest {
         assertThat(analyze("I. ÚS 22/2015", 3, 3, false), contains(new Term("i.us22"), new Term("us22/2015")));
     }
 
+
     @Test
     public void customDelimiter() {
         assertThat(analyze("I. ÚS 22/2015", 3, 3, false, '|'), contains(new Term("i|us|22"), new Term("us|22|2015")));
         assertThat(analyze("I. ÚS 22/2015", 3, 3, true, ','), contains(new Term("i,us,22"), new Term("us,22,2015"), new Term("i,us,22,2015")));
         assertThat(analyze("I. ÚS 22/2015", 4, 4, true, '.'), contains(new Term("i.us.22.2015")));
     }
+
 
     @Test
     public void ecli() {
@@ -103,10 +82,12 @@ public class IdentifierNGramFilterTest {
 //        assertThat(analyze("ECLI:SK:USSR:2015:1.US.14.2015.1", 1, 1, true, true).size(), is(1));
     }
 
+
     private static List<Term> analyze(final String text, final int minNGramSize, final int maxNGramSize,
             final boolean includeIdentifier) {
         return analyze(text, minNGramSize, maxNGramSize, includeIdentifier, EMPTY_CHAR);
     }
+
 
     private static List<Term> analyze(final String text, final int minNGramSize, final int maxNGramSize,
             final boolean includeIdentifier, final char customDelimiter) {
@@ -114,14 +95,14 @@ public class IdentifierNGramFilterTest {
         Analyzer analyzer = new Analyzer() {
             @Override
             protected Analyzer.TokenStreamComponents createComponents(String fieldName) {
-                final Tokenizer src = new IdentifierTokenizer();
+                final Tokenizer src = new PunctationTokenizer();
                 TokenStream tok = new IdentifierNGramFilter(src, minNGramSize, maxNGramSize, includeIdentifier, customDelimiter);
                 tok = new ASCIIFoldingFilter(tok);
                 tok = new LowerCaseFilter(tok);
                 return new Analyzer.TokenStreamComponents(src, tok);
             }
         };
-        try (TokenStream stream = analyzer.tokenStream(null, new StringReader(text))) { // získaj inštanciu prúdu tokenov
+        try ( TokenStream stream = analyzer.tokenStream(null, new StringReader(text))) { // získaj inštanciu prúdu tokenov
             stream.reset();
             // iteruj cez tokeny
             while (stream.incrementToken()) {

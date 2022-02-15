@@ -16,14 +16,13 @@ package eu.hlavki.lucene.analysis.identifier;
  * limitations under the License.
  */
 import java.io.IOException;
-
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizerImpl;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.util.AttributeFactory;
 
@@ -49,12 +48,12 @@ import org.apache.lucene.util.AttributeFactory;
  * IdentifierTokenizer was named StandardTokenizer in Lucene versions prior to 3.1. As of 3.1,
  * {@link StandardTokenizer} implements Unicode text segmentation, as specified by UAX#29.
  */
-public final class IdentifierTokenizer extends Tokenizer {
+public final class PunctationTokenizer extends Tokenizer {
 
     /**
      * A private instance of the JFlex-constructed scanner
      */
-    private IdentifierTokenizerImpl scanner;
+    private PunctationTokenizerImpl scanner;
 
     public static final int ALPHANUM = 0;
     public static final int PUNCTATION = 1;
@@ -67,50 +66,71 @@ public final class IdentifierTokenizer extends Tokenizer {
         "<PUNCTATION>"
     };
 
+    /**
+     * Absolute maximum sized token
+     */
+    public static final int MAX_TOKEN_LENGTH_LIMIT = 1024 * 1024;
+
     private int skippedPositions;
 
     private int maxTokenLength = StandardAnalyzer.DEFAULT_MAX_TOKEN_LENGTH;
 
+
     /**
-     * Set the max allowed token length. Any token longer than this is skipped.
-     * @param length
+     * Set the max allowed token length. Tokens larger than this will be chopped
+     * up at this token length and emitted as multiple tokens. If you need to
+     * skip such large tokens, you could increase this max length, and then
+     * use {@code LengthFilter} to remove long tokens. The default is
+     * {@link StandardAnalyzer#DEFAULT_MAX_TOKEN_LENGTH}.
+     *
+     * @throws IllegalArgumentException if the given length is outside of the
+     * range [1, {@value #MAX_TOKEN_LENGTH_LIMIT}].
      */
     public void setMaxTokenLength(int length) {
         if (length < 1) {
             throw new IllegalArgumentException("maxTokenLength must be greater than zero");
+        } else if (length > MAX_TOKEN_LENGTH_LIMIT) {
+            throw new IllegalArgumentException("maxTokenLength may not exceed " + MAX_TOKEN_LENGTH_LIMIT);
         }
-        this.maxTokenLength = length;
+        if (length != maxTokenLength) {
+            maxTokenLength = length;
+            scanner.setBufferSize(length);
+        }
     }
 
+
     /**
+     * Returns the current maximum token length
+     *
      * @see #setMaxTokenLength
      */
     public int getMaxTokenLength() {
         return maxTokenLength;
     }
 
+
     /**
-     * Creates a new instance of the {@link IdentifierTokenizer}. Attaches the <code>input</code> to the newly
-     * created JFlex scanner.
+     * Creates a new instance of the {@link PunctationTokenizer}. Attaches
+     * the <code>input</code> to the newly created JFlex scanner.
      *
      * See http://issues.apache.org/jira/browse/LUCENE-1068
      */
-    public IdentifierTokenizer() {
+    public PunctationTokenizer() {
         init();
     }
 
+
     /**
-     * Creates a new IdentifierTokenizer with a given {@link org.apache.lucene.util.AttributeFactory}
-     *
-     * @param factory
+     * Creates a new PunctationTokenizer with a given {@link org.apache.lucene.util.AttributeFactory}
      */
-    public IdentifierTokenizer(AttributeFactory factory) {
+    public PunctationTokenizer(AttributeFactory factory) {
         super(factory);
         init();
     }
 
+
     private void init() {
-        this.scanner = new IdentifierTokenizerImpl(input);
+        this.scanner = new PunctationTokenizerImpl(input);
     }
 
     // this tokenizer generates three attributes:
@@ -120,10 +140,11 @@ public final class IdentifierTokenizer extends Tokenizer {
     private final PositionIncrementAttribute posIncrAtt = addAttribute(PositionIncrementAttribute.class);
     private final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
 
+
     /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.analysis.TokenStream#next()
+   * (non-Javadoc)
+   *
+   * @see org.apache.lucene.analysis.TokenStream#next()
      */
     @Override
     public final boolean incrementToken() throws IOException {
@@ -142,7 +163,7 @@ public final class IdentifierTokenizer extends Tokenizer {
                 scanner.getText(termAtt);
                 final int start = scanner.yychar();
                 offsetAtt.setOffset(correctOffset(start), correctOffset(start + termAtt.length()));
-                typeAtt.setType(TOKEN_TYPES[tokenType]);
+                typeAtt.setType(PunctationTokenizer.TOKEN_TYPES[tokenType]);
                 return true;
             } else
                 // When we skip a too-long term, we still increment the
@@ -150,6 +171,7 @@ public final class IdentifierTokenizer extends Tokenizer {
                 skippedPositions++;
         }
     }
+
 
     @Override
     public final void end() throws IOException {
@@ -161,11 +183,13 @@ public final class IdentifierTokenizer extends Tokenizer {
         posIncrAtt.setPositionIncrement(posIncrAtt.getPositionIncrement() + skippedPositions);
     }
 
+
     @Override
     public void close() throws IOException {
         super.close();
         scanner.yyreset(input);
     }
+
 
     @Override
     public void reset() throws IOException {

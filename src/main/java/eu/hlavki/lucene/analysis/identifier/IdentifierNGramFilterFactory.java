@@ -16,19 +16,16 @@
 package eu.hlavki.lucene.analysis.identifier;
 
 import java.util.Map;
+import org.apache.lucene.analysis.TokenFilterFactory;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.util.TokenFilterFactory;
 
-/**
- *
- * @author Michal Hlavac
- */
 public class IdentifierNGramFilterFactory extends TokenFilterFactory {
 
     private final int minGramSize;
     private final int maxGramSize;
     private final boolean includeIdentifier;
     private final char customDelimiter;
+
 
     /**
      * Creates a new CodeFilterFactory
@@ -45,6 +42,7 @@ public class IdentifierNGramFilterFactory extends TokenFilterFactory {
             throw new IllegalArgumentException("Unknown parameters: " + args);
         }
     }
+
 
     @Override
     public IdentifierNGramFilter create(TokenStream input) {

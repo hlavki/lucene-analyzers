@@ -19,7 +19,7 @@ package eu.hlavki.lucene.analysis.identifier;
 
 /*
 
-WARNING: if you change IdentifierTokenizerImpl.jflex and need to regenerate
+WARNING: if you change PunctationTokenizerImpl.jflex and need to regenerate
       the tokenizer, only use the trunk version of JFlex 1.5 at the moment!
 
 */
@@ -27,38 +27,42 @@ WARNING: if you change IdentifierTokenizerImpl.jflex and need to regenerate
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 /**
- * This class implements the IdentifierTokenizer
+ * This class implements the PunctationTokenizer
  */
 %%
 
-%class IdentifierTokenizerImpl
-%unicode 3.0
+%unicode 6.3
 %integer
+%final
+%public
+%class PunctationTokenizerImpl
 %function getNextToken
-%pack
 %char
-%buffer 4096
+%buffer 255
 
 %{
 
-public static final int ALPHANUM          = IdentifierTokenizer.ALPHANUM;
-public static final int PUNCTATION        = IdentifierTokenizer.PUNCTATION;
+  public static final int ALPHANUM          = PunctationTokenizer.ALPHANUM;
+  public static final int PUNCTATION        = PunctationTokenizer.PUNCTATION;
 
-public static final String [] TOKEN_TYPES = IdentifierTokenizer.TOKEN_TYPES;
 
-public final int yychar()
-{
-    return yychar;
-}
+  /** Character count processed so far */
+  public final int yychar()
+  {
+    return (int) yychar;
+  }
 
-/**
- * Fills CharTermAttribute with the current token text.
- */
-public final void getText(CharTermAttribute t) {
-  t.copyBuffer(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead);
-}
+  /**
+   * Fills CharTermAttribute with the current token text.
+   */
+  public final void getText(CharTermAttribute t) {
+    t.copyBuffer(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead);
+  }
 
-   public final void setBufferSize(int numChars) {
+  /**
+   * Sets the scanner buffer size in chars
+   */
+  public final void setBufferSize(int numChars) {
      throw new UnsupportedOperationException();
    }
 %}

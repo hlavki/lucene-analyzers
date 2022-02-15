@@ -36,7 +36,6 @@ import org.apache.lucene.util.AttributeImpl;
  * token first, then increasing length (meaning that "192.168.1" will give "192", "192.168", "192.168.1",
  * "168", "168.1", "1").
  *
- * @author Michal Hlavac
  */
 public class IdentifierNGramFilter extends TokenFilter {
 
@@ -61,6 +60,7 @@ public class IdentifierNGramFilter extends TokenFilter {
     private int termCount;
     private int maxSize;
 
+
     public IdentifierNGramFilter(TokenStream input, int minGramSize, int maxGramSize,
             boolean includeEdged, char customDelimiter) {
         super(input);
@@ -77,9 +77,11 @@ public class IdentifierNGramFilter extends TokenFilter {
         maxSize = 0;
     }
 
+
     private boolean overwriteDelimiter() {
         return customDelimiter != EMPTY_CHAR;
     }
+
 
     @Override
     public final boolean incrementToken() throws IOException {
@@ -92,7 +94,7 @@ public class IdentifierNGramFilter extends TokenFilter {
             do {
                 read = input.incrementToken();
                 if (read) {
-                    boolean punctation = typeAtt.type().equals(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.PUNCTATION]);
+                    boolean punctation = typeAtt.type().equals(PunctationTokenizer.TOKEN_TYPES[PunctationTokenizer.PUNCTATION]);
                     if (!punctation) {
                         count++;
                         termCount++;
@@ -142,10 +144,12 @@ public class IdentifierNGramFilter extends TokenFilter {
         return read;
     }
 
+
     private void markComposition(PackedTokenAttributeImpl compositionTermAtt) {
-        compositionTermAtt.setType(IdentifierTokenizer.TOKEN_TYPES[IdentifierTokenizer.ALPHANUM]);
+        compositionTermAtt.setType(PunctationTokenizer.TOKEN_TYPES[PunctationTokenizer.ALPHANUM]);
         ((AttributeImpl) compositionTermAtt).copyTo((AttributeImpl) termAtt);
     }
+
 
     @Override
     public void reset() throws IOException {
@@ -158,6 +162,7 @@ public class IdentifierNGramFilter extends TokenFilter {
         queue.clear();
         compositionTermAtt.clear();
     }
+
 
     private PackedTokenAttributeImpl createComposition(Item[] items) {
         PackedTokenAttributeImpl result = new PackedTokenAttributeImpl();
@@ -176,6 +181,7 @@ public class IdentifierNGramFilter extends TokenFilter {
         return result;
     }
 
+
     private void appendComposition(PackedTokenAttributeImpl target, CharTermAttribute source, OffsetAttribute offsetAtt) {
         // pridaj atribúty do kompozície
         int startOffset = target.length() == 0 ? offsetAtt.startOffset() : target.startOffset();
@@ -188,22 +194,27 @@ public class IdentifierNGramFilter extends TokenFilter {
         private final PackedTokenAttributeImpl attr;
         private final List<PackedTokenAttributeImpl> delimiters;
 
+
         public Item(PackedTokenAttributeImpl attr) {
             this.attr = attr;
             delimiters = new ArrayList<>();
         }
 
+
         public void addDelimiter(PackedTokenAttributeImpl delimiter) {
             delimiters.add(delimiter);
         }
+
 
         public PackedTokenAttributeImpl getAttr() {
             return attr;
         }
 
+
         public List<PackedTokenAttributeImpl> getDelimiters() {
             return delimiters;
         }
+
 
         @Override
         public String toString() {

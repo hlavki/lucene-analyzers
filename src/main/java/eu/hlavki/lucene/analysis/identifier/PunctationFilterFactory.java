@@ -1,5 +1,7 @@
+package eu.hlavki.lucene.analysis.identifier;
+
 /*
- * Copyright 2016 Michal Hlavac.
+ * Copyright 2022 hlavki.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.hlavki.lucene.analysis.identifier;
-
 import java.util.Map;
 import org.apache.lucene.analysis.TokenFilterFactory;
 import org.apache.lucene.analysis.TokenStream;
 
-public class IdentifierFilterFactory extends TokenFilterFactory {
-
-    private final char customDelimiter;
-
+public class PunctationFilterFactory extends TokenFilterFactory {
 
     /**
      * Creates a new CodeFilterFactory
      *
      * @param args
      */
-    public IdentifierFilterFactory(Map<String, String> args) {
+    public PunctationFilterFactory(Map<String, String> args) {
         super(args);
-        customDelimiter = getChar(args, "customDelimiter", IdentifierFilter.EMPTY_CHAR);
         if (!args.isEmpty()) {
             throw new IllegalArgumentException("Unknown parameters: " + args);
         }
@@ -39,7 +35,7 @@ public class IdentifierFilterFactory extends TokenFilterFactory {
 
 
     @Override
-    public IdentifierFilter create(TokenStream input) {
-        return new IdentifierFilter(input, customDelimiter);
+    public PunctationFilter create(TokenStream input) {
+        return new PunctationFilter(input);
     }
 }
